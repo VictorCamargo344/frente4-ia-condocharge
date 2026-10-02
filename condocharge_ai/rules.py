@@ -29,3 +29,11 @@ def verificar_duracao_curta(sessao: SessionDTO):
     if duracao < DURACAO_MINIMA_SEGUNDOS and sessao.total_kwh > 0:
         return "DURATION_TOO_SHORT"
     return None
+
+
+def verificar_carregador_conhecido(sessao: SessionDTO):
+    """Detecta se o carregador utilizado na sessão é conhecido"""
+    if sessao.charger_id not in POTENCIA_NOMINAL_KW:
+        return "UNKNOWN_CHARGER"
+    return None
+

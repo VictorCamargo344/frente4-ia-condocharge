@@ -58,7 +58,23 @@ def test_verificar_duracao_curta():
     dados["ended_at"] = "2026-09-22T19:00:30"
 
     sessao = SessionDTO.model_validate(dados)
-
     resultado = rules.verificar_duracao_curta(sessao)
     assert resultado == "DURATION_TOO_SHORT"
 
+
+def test_carregador_conhecido_passa():
+    """Uma sessão com carregador cadastrado não deve violar a regra UNKNOWN_CHARGER."""
+    dados = dados_sessao_valida()
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_carregador_conhecido(sessao)
+    assert resultado is None
+
+
+def test_carregador_desconhecido_e_detectado():
+    """Uma sessão com carregador não conhecido deve violar a regra UNKNOWN_CHARGER."""
+    dados = dados_sessao_valida()
+    dados["charger_id"] = "HCA99"
+
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_carregador_conhecido(sessao)
+    assert resultado == "UNKNOWN_CHARGER"
