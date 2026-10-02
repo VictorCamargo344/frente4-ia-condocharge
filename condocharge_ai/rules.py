@@ -82,3 +82,25 @@ def verificar_atribuicao_energia(sessao: SessionDTO):
     if diferenca > sessao.total_kwh * TOLERANCIA_ATRIBUICAO:
         return "ENERGY_SOURCE_ATTRIBUTION_MISMATCH"
     return None
+
+
+# Ordem em que as regras são aplicadas. Para criar uma regra nova, basta escrever a função acima e acrescentá-la nesta lista.
+REGRAS = [
+    verificar_timestamp,
+    verificar_kwh_negativo,
+    verificar_duracao_curta,
+    verificar_carregador_conhecido,
+    verificar_potencia,
+    verificar_capacidade,
+    verificar_atribuicao_energia,
+]
+
+
+def verificar_regras(sessao: SessionDTO):
+    """Aplica todas as regras e devolve a lista de códigos violados (vazia se a sessão é plausível)."""
+    violacoes = []
+    for regra in REGRAS:
+        codigo = regra(sessao)
+        if codigo is not None:
+            violacoes.append(codigo)
+    return violacoes

@@ -138,3 +138,24 @@ def test_atribuicao_de_energia_incoerente_e_detectada():
 
     resultado = rules.verificar_atribuicao_energia(sessao)
     assert resultado == "ENERGY_SOURCE_ATTRIBUTION_MISMATCH"
+
+
+def test_sessao_plausivel_nao_viola_nenhuma_regra():
+    """Uma sessão plausível deve passar por todas as regras sem violações."""
+    dados = dados_sessao_valida()
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_regras(sessao)
+    assert resultado == []
+
+
+def test_sessao_com_varios_problemas_retorna_todas_as_violacoes():
+    """Uma sessão com mais de um problema deve ter todas as violações listadas."""
+    dados = dados_sessao_valida()
+    dados["grid_kwh"] = -900
+    dados["max_power_kw"] = 15.0
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_regras(sessao)
+    assert "NEGATIVE_KWH" in resultado
+    assert "POWER_EXCEEDS_NOMINAL" in resultado
