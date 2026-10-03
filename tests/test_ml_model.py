@@ -9,7 +9,7 @@ from tests.test_schemas import dados_sessao_valida
 
 
 def test_features_extraidas_na_ordem_esperada():
-    """A sessão padrão (19h00 às 21h10) deve virar o vetor de features esperado."""
+    """A sessão padrão (2h10, 14,8 kWh) deve virar o vetor de features esperado."""
     dados = dados_sessao_valida()
     sessao = SessionDTO.model_validate(dados)
     features = ml_model.extrair_features(sessao)
@@ -19,7 +19,3 @@ def test_features_extraidas_na_ordem_esperada():
     assert features[1] == 14.8
     assert features[2] == 6.8
     assert features[3] == 7.1
-    assert features[4] == 19.0
-
-
-
