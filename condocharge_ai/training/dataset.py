@@ -72,3 +72,65 @@ def gerar_sessoes_normais(quantidade, semente=42):
     for i in range(quantidade):
         sessoes.append(gerar_sessao_normal(rng, i))
     return sessoes
+
+
+# Tipos de anomalia de medição usados para avaliar o modelo.
+# Todas são fisicamente possíveis (passam nas regras), mas destoam do padrão real do lab.
+TIPOS_ANOMALIA = [
+    "pico_alto",
+    "potencia_alta",
+    "energia_alta",
+    "lenta",
+    "medicao_incoerente",
+]
+
+
+def criar_anomalia(base, tipo, indice):
+    """Cria uma anomalia de medição a partir de uma sessão normal, sem violar as regras físicas."""
+    dados = dict(base)  # cópia: a sessão original não pode ser alterada
+    dados["session_id"] = f"ANOM-{tipo}-{indice:02d}"
+    inicio = datetime.fromisoformat(str(base["started_at"]))
+
+    if tipo == "pico_alto":
+        # Pico de 6 kW: abaixo do limite físico, mas o real nunca passou de 3,5 kW
+        dados["max_power_kw"] = 6.0
+
+    elif tipo == "potencia_alta":
+        # Média de 5 kW: o real nunca passou de 3,4 kW. A duração encolhe para fechar a conta
+        dados["average_power_kw"] = 5.0
+        dados["max_power_kw"] = 6.0
+        duracao_horas = base["total_kwh"] / 5.0 / FRACAO_TEMPO_CARREGANDO
+        dados["ended_at"] = inicio + timedelta(hours=duracao_horas)
+
+    elif tipo == "energia_alta":
+        # Energia bem acima da maior sessão real (16 kWh), com duração coerente
+        dados["total_kwh"] = round(base["total_kwh"] * 2.5 + 5.0, 2)
+        duracao_horas = dados["total_kwh"] / base["average_power_kw"] / FRACAO_TEMPO_CARREGANDO
+        dados["ended_at"] = inicio + timedelta(hours=duracao_horas)
+
+    elif tipo == "lenta":
+        # Média de 0,5 kW: o real nunca ficou abaixo de 1,0 kW
+        dados["average_power_kw"] = 0.5
+        duracao_horas = base["total_kwh"] / 0.5 / FRACAO_TEMPO_CARREGANDO
+        dados["ended_at"] = inicio + timedelta(hours=duracao_horas)
+
+    elif tipo == "medicao_incoerente":
+        # Energia registrada em 30% do que potência x tempo indicam: os números não conversam
+        dados["total_kwh"] = round(base["total_kwh"] * 0.3, 2)
+
+    else:
+        raise ValueError(f"Tipo de anomalia desconhecido: {tipo}")
+
+    # Atribuição coerente com o padrão do lab (toda energia registrada como green)
+    dados["green_kwh"] = dados["total_kwh"]
+    dados["grid_kwh"] = 0.0
+    return dados
+
+
+def criar_anomalias(sessoes_base, por_tipo=8):
+    """Aplica cada tipo de anomalia sobre as primeiras sessões da lista base."""
+    anomalias = []
+    for tipo in TIPOS_ANOMALIA:
+        for indice, base in enumerate(sessoes_base[:por_tipo]):
+            anomalias.append(criar_anomalia(base, tipo, indice))
+    return anomalias
