@@ -63,3 +63,12 @@ def gerar_sessao_normal(rng, indice):
         "max_power_kw": round(potencia_maxima_kw, 2),
         "status": "completed",
     }
+
+
+def gerar_sessoes_normais(quantidade, semente=42):
+    """Gera múltiplas sessões de recarga normal, no formato do SessionDTO."""
+    rng = np.random.default_rng(semente)
+    sessoes = []
+    for i in range(quantidade):
+        sessoes.append(gerar_sessao_normal(rng, i))
+    return sessoes
