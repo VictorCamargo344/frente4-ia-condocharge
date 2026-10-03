@@ -15,6 +15,10 @@ TOLERANCIA_POTENCIA = 0.05
 TOLERANCIA_ATRIBUICAO = 0.05
 
 
+# Piso da tolerância (kWh): a SEMS mostra o green com uma casa decimal
+TOLERANCIA_ATRIBUICAO_MIN_KWH = 0.1
+
+
 def verificar_timestamp(sessao: SessionDTO):
     """Detecta sessão que termina antes ou no mesmo instante em que começou."""
     if sessao.ended_at <= sessao.started_at:
@@ -79,7 +83,8 @@ def verificar_atribuicao_energia(sessao: SessionDTO):
     soma_origens = sessao.green_kwh + sessao.grid_kwh
     diferenca = abs(soma_origens - sessao.total_kwh)
 
-    if diferenca > sessao.total_kwh * TOLERANCIA_ATRIBUICAO:
+    tolerancia = max(sessao.total_kwh * TOLERANCIA_ATRIBUICAO, TOLERANCIA_ATRIBUICAO_MIN_KWH)
+    if diferenca > tolerancia:
         return "ENERGY_SOURCE_ATTRIBUTION_MISMATCH"
     return None
 

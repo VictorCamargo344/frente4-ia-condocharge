@@ -159,3 +159,16 @@ def test_sessao_com_varios_problemas_retorna_todas_as_violacoes():
     resultado = rules.verificar_regras(sessao)
     assert "NEGATIVE_KWH" in resultado
     assert "POWER_EXCEEDS_NOMINAL" in resultado
+
+
+def test_atribuicao_com_arredondamento_em_sessao_pequena_passa():
+    """Uma sessão pequena com green arredondado a uma casa decimal não deve violar a regra ENERGY_SOURCE_ATTRIBUTION_MISMATCH."""
+    dados = dados_sessao_valida()
+    dados["total_kwh"] = 0.75
+    dados["green_kwh"] = 0.7  # SEMS mostra uma casa decimal
+    dados["grid_kwh"] = 0.0
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_atribuicao_energia(sessao)
+    assert resultado is None
