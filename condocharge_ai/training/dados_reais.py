@@ -68,3 +68,10 @@ def carregar_sessoes_reais(pasta=PASTA_DADOS):
             sessoes_sem_energia.append(dados)
 
     return sessoes, sessoes_sem_energia
+
+
+def separar_treino_validacao(sessoes, fracao_treino=0.8):
+    """Separa as sessões em treino (mais antigas) e validação (mais recentes), por ordem cronológica."""
+    ordenadas = sorted(sessoes, key=lambda s: s["started_at"])
+    corte = int(len(ordenadas) * fracao_treino)
+    return ordenadas[:corte], ordenadas[corte:]
