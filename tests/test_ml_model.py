@@ -20,3 +20,35 @@ def test_features_extraidas_na_ordem_esperada():
     assert features[2] == 6.8
     assert features[3] == 7.1
     assert features[4] == pytest.approx(1.0045, abs=0.001)
+
+
+def sessao_tipica_do_lab():
+    """Sessão com valores próximos da mediana das sessões reais do HCA G2."""
+    dados = dados_sessao_valida()
+    dados["started_at"] = "2026-09-22T21:00:00"
+    dados["ended_at"] = "2026-09-23T00:50:00"
+    dados["total_kwh"] = 8.0
+    dados["green_kwh"] = 8.0
+    dados["grid_kwh"] = 0.0
+    dados["average_power_kw"] = 2.3
+    dados["max_power_kw"] = 3.4
+    return dados
+
+
+def test_sessao_tipica_nao_e_anomala():
+    """Uma sessão com a cara das sessões reais do lab não deve ser marcada pela Camada 3."""
+    sessao = SessionDTO.model_validate(sessao_tipica_do_lab())
+    resultado = ml_model.avaliar_sessao(sessao)
+    assert resultado["is_anomaly"] is False
+    assert resultado["reasons"] == []
+
+
+def test_pico_de_potencia_atipico_e_anomalo():
+    """Uma sessão típica com pico de 6 kW (o lab nunca passa de 3,5 kW) deve ser marcada pela Camada 3."""
+    dados = sessao_tipica_do_lab()
+    dados["max_power_kw"] = 6.0
+    sessao = SessionDTO.model_validate(dados)
+    resultado = ml_model.avaliar_sessao(sessao)
+    assert resultado["is_anomaly"] is True
+    assert resultado["model_version"] == "v1.0.0"
+
