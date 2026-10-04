@@ -62,8 +62,11 @@ def extrair_features(sessao: SessionDTO):
 # lido de novo quando o processo reinicia (ou com carregar_modelo.cache_clear()).
 @lru_cache(maxsize=1)
 def carregar_modelo():
-    """Carrega o modelo treinado do disco uma única vez e reaproveita nas chamadas seguintes."""
-    return joblib.load(CAMINHO_MODELO)
+    """Carrega o modelo treinado uma única vez e confere se ele usa as features atuais."""
+    modelo = joblib.load(CAMINHO_MODELO)
+    if modelo["nomes_features"] != NOMES_FEATURES:
+        raise ValueError("O modelo salvo foi treinado com outras features. Rode o training/train.py novamente.")
+    return modelo
 
 
 def avaliar_sessao(sessao: SessionDTO):
