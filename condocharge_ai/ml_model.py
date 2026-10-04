@@ -1,6 +1,7 @@
 """Camada 3: detecção de anomalias estatísticas com Isolation Forest e LOF."""
 
 from condocharge_ai.schemas import SessionDTO
+from pathlib import Path
 
 
 NOMES_FEATURES = [
@@ -10,6 +11,9 @@ NOMES_FEATURES = [
     "max_power_kw",
     "fator_coerencia",
 ]
+
+# Arquivo com o modelo treinado (gerado por training/train.py)
+CAMINHO_MODELO = Path(__file__).parent / "artifacts" / "modelo_v1.joblib"
 
 def extrair_features(sessao: SessionDTO):
     """Transforma uma sessão no vetor numérico usado pelo modelo."""
