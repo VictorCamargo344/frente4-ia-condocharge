@@ -24,7 +24,7 @@ Avaliação com as sessões reais mais recentes (que o modelo nunca viu) e com a
 |---|---|
 | Anomalias de medição | **38 de 40 detectadas (95%)**, todas pela camada de ML |
 | Sessões reais normais | **2 falsos alarmes em 42 sessões (~5%)** |
-| Sessões reais sem energia (carro plugado sem carregar) | **10 de 10 barradas** (3 pelas regras, 7 pelo ML) |
+| Sessões reais sem energia (carro plugado sem carregar) | **10 de 10 identificadas** pela regra de sessão sem recarga |
 
 A avaliação também encontrou uma sessão real em que a SEMS+ não atribuiu a energia nem ao solar nem à rede, barrada corretamente pela regra de atribuição. Essa sessão é a 43ª do conjunto de validação: por isso o script de avaliação mostra "3 de 43" barradas, somando o bloqueio legítimo pela regra aos 2 falsos alarmes. Detalhes e justificativas em [`DECISOES.md`](DECISOES.md).
 
