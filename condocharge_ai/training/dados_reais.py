@@ -6,12 +6,13 @@ regime de uso.
 """
 
 import glob
-
+from pathlib import Path
 import pandas as pd
 
 # Pasta com os CSVs exportados da SEMS+, relativa à raiz do projeto
 # (por isso os scripts de treino rodam da raiz, com python -m)
-PASTA_DADOS = "data"
+# Pasta com os CSVs exportados da SEMS+, na raiz do projeto (calculada a partir deste arquivo)
+PASTA_DADOS = Path(__file__).parent.parent.parent / "data"
 
 
 # Texto do motivo de fim na SEMS+ -> SessionStatus. Motivos fora desta lista
