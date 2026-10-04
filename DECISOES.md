@@ -14,7 +14,7 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 - **Fonte: SEMS+, sem acesso ao equipamento.** Nenhum integrante tem acesso físico ao HCA G2 do laboratório, então os dados vieram da plataforma SEMS+. O gateway local com Modbus TCP, previsto na Sprint 1, ficou fora do protótipo.
 - **225 sessões reais extraídas (15/10/2025 a 02/10/2026).** A extração foi feita na interface da SEMS+ com apoio de uma extensão de IA para navegador, apenas em modo de leitura. Foram usadas só as sessões da fase de uso regular (mesmo cartão, recarga noturna quase diária); a fase anterior, de comissionamento e testes do instalador, foi descartada por representar outro regime de uso.
 - **Correção do campo green em 35 sessões.** Nessas sessões o green veio cerca de 10 vezes maior que o total (ex.: total 5,2 kWh, green 52,0), padrão de vírgula decimal lida errado na extração. Quando o green passa do dobro do total, ele é dividido por 10.
-- **10 sessões sem energia separadas.** Sessões com até 0,5 kWh (carro plugado sem carregar) não entram como sessões normais; são usadas como caso real na avaliação.
+- **10 sessões sem energia separadas.** Sessões com até 0,5 kWh (carro plugado sem carregar) não entram como sessões normais; são usadas como caso real na avaliação. O limite da leitura (0,5 kWh) e o da regra `NO_ENERGY_DELIVERED` (0,25 kWh) separam exatamente as mesmas sessões: as sem recarga vão até 0,24 kWh e as normais começam em 0,75 kWh.
 - **Separação temporal entre treino e validação.** As 172 sessões mais antigas treinam o modelo e as 43 mais recentes (a partir de 23/07/2026) validam. Simula o uso real: treinar com o histórico e aplicar em sessões futuras.
 
 ## 3. Camada 1 — validação estrutural
@@ -64,3 +64,9 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 - **XGBoost e dados meteorológicos (INMET):** previstos para a IA B; não utilizados.
 - **Validação com um único carregador e um único usuário simulado.** Em um condomínio real, o modelo deve ser retreinado com o histórico do próprio prédio. Para carregadores de potências diferentes, as features de potência podem ser normalizadas pela potência nominal de cada um.
 - **Condomínio sem histórico ("partida a frio"):** funciona só com as Camadas 1 e 2 até acumular sessões, ou com um modelo inicial treinado em dados sintéticos.
+- **Retreino exige reiniciar o processo.** O modelo é carregado uma única vez e mantido em memória (`lru_cache`). Um modelo retreinado só passa a valer depois que o backend reinicia.
+- **Correção do green é uma heurística.** A regra "green maior que o dobro do total, dividir por 10" funciona para os 35 casos atuais, mas foi feita para esse erro de extração específico. Uma extração direta pela API da SEMS+ dispensaria a correção.
+- **Motivos de fim desconhecidos viram falha.** Qualquer motivo da SEMS+ fora do mapeamento é tratado como `interrupted_by_failure`. Nenhuma sessão real produziu `stopped_by_user`.
+- **Junção das tabelas pelo horário de início.** Os CSVs da SEMS+ não têm identificador de sessão; a lista e os detalhes são unidos pelo horário de início. Hoje as 225 sessões casam uma a uma, sem duplicatas.
+- **Gerador sintético simplificado.** Limita a potência média a 3,3 kW (o real chegou a 3,38) e sorteia a divisão solar/rede, enquanto o lab registra quase tudo como solar. Não afeta o modelo, que é treinado com dado real.
+- **Motivos sobrepostos.** Uma mesma sessão pode disparar mais de uma regra (ex.: término antes do início também conta como duração curta). O síndico vê todos os motivos, o que é redundante mas não incorreto.
