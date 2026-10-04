@@ -66,4 +66,4 @@ def check_session(dados):
         resultado_ml["reasons"],
         resultado_ml["score"],
         resultado_ml["model_version"],
-    )   
+    )
