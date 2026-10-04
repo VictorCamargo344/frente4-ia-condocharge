@@ -23,6 +23,9 @@ def contar_portas(sessoes):
 def imprimir_grupo(nome, contagem):
     """Mostra quantas sessões do grupo saíram por cada porta e a fração barrada."""
     total = sum(contagem.values())
+    if total == 0:
+        print(f"\n{nome}: nenhuma sessão")
+        return
     barradas = total - contagem["passed"]
 
     print(f"\n{nome} ({total} sessões)")
