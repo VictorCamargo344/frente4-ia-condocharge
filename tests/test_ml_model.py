@@ -19,3 +19,4 @@ def test_features_extraidas_na_ordem_esperada():
     assert features[1] == 14.8
     assert features[2] == 6.8
     assert features[3] == 7.1
+    assert features[4] == pytest.approx(1.0045, abs=0.001)
