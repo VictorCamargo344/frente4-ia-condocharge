@@ -174,3 +174,23 @@ def test_atribuicao_com_arredondamento_em_sessao_pequena_passa():
 
     resultado = rules.verificar_atribuicao_energia(sessao)
     assert resultado is None
+
+
+def test_sessao_com_energia_passa_na_regra_sem_energia():
+    """Uma sessão com energia entregue não deve violar a regra NO_ENERGY_DELIVERED."""
+    dados = dados_sessao_valida()
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_sem_energia(sessao)
+    assert resultado is None
+
+
+def test_sessao_sem_energia_e_detectada():
+    """Uma sessão sem energia entregue (carro plugado sem carregar) deve violar a regra NO_ENERGY_DELIVERED."""
+    dados = dados_sessao_valida()
+    dados["green_kwh"] = 0.0
+    dados["grid_kwh"] = 0.0
+    dados["total_kwh"] = 0.0
+
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_sem_energia(sessao)
+    assert resultado == "NO_ENERGY_DELIVERED"

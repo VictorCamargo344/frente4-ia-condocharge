@@ -30,6 +30,9 @@ TOLERANCIA_ATRIBUICAO = 0.05
 # diferença acima dos 5% do total).
 TOLERANCIA_ATRIBUICAO_MIN_KWH = 0.1
 
+# Energia máxima (kWh) de uma sessão sem recarga: as sessões reais sem energia tiveram até 0,24 kWh, e a menor sessão normal real teve 0,75 kWh
+ENERGIA_MINIMA_RECARGA_KWH = 0.25
+
 
 def verificar_timestamp(sessao: SessionDTO):
     """Detecta sessão que termina antes ou no mesmo instante em que começou."""
@@ -106,6 +109,13 @@ def verificar_atribuicao_energia(sessao: SessionDTO):
     return None
 
 
+def verificar_sem_energia(sessao: SessionDTO):
+    """Detecta sessão em que o carro ficou plugado sem receber energia."""
+    if sessao.total_kwh <= ENERGIA_MINIMA_RECARGA_KWH:
+        return "NO_ENERGY_DELIVERED"
+    return None
+
+
 # Ordem em que as regras são aplicadas. Para criar uma regra nova, basta escrever a função acima e acrescentá-la nesta lista.
 # A lista guarda as próprias funções (sem parênteses), que verificar_regras chama uma a uma.
 REGRAS = [
@@ -116,6 +126,7 @@ REGRAS = [
     verificar_potencia,
     verificar_capacidade,
     verificar_atribuicao_energia,
+    verificar_sem_energia,
 ]
 
 

@@ -23,6 +23,7 @@ DESCRICOES_MOTIVOS = {
     "ENERGY_SOURCE_ATTRIBUTION_MISMATCH": "Energia solar + rede não corresponde ao total; verificar a medição antes do rateio.",
     "ISOLATION_FOREST_OUTLIER": "Padrão de medição muito diferente do histórico do condomínio.",
     "LOF_OUTLIER": "Padrão de medição isolado em relação às sessões mais parecidas.",
+    "NO_ENERGY_DELIVERED": "Carro plugado sem receber energia: vaga ocupada sem recarga.",
 }
 
 
