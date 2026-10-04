@@ -1,8 +1,15 @@
-"""Regras determinísticas da Camada 2: plausibilidade física das sessões."""
+"""Regras determinísticas da Camada 2: plausibilidade física das sessões.
+
+Cada regra devolve um código de violação ou None. Violação aqui é certeza
+física (não suspeita estatística), por isso a fachada dá score 1.0 a ela.
+"""
 
 from condocharge_ai.schemas import SessionDTO
 
 # Potência nominal (kW) de cada carregador cadastrado no condomínio.
+# Dicionário (e não constante única) para atender prédios com vários
+# carregadores de potências diferentes. É o limite físico do equipamento,
+# não o teto de operação observado no lab (3,3 a 3,5 kW), que fica com o ML.
 POTENCIA_NOMINAL_KW = {
     "HCA01": 7.0,
 }
@@ -11,11 +18,16 @@ POTENCIA_NOMINAL_KW = {
 DURACAO_MINIMA_SEGUNDOS = 60
 
 # Margem para variações normais de medição (5%).
+# Potência: a sessão de referência teve pico de 7,1 kW num carregador de 7,0 kW;
+# medidores reais oscilam um pouco acima do nominal. A mesma margem vale para
+# a regra de capacidade, que usa a potência nominal.
 TOLERANCIA_POTENCIA = 0.05
 TOLERANCIA_ATRIBUICAO = 0.05
 
 
-# Piso da tolerância (kWh): a SEMS mostra o green com uma casa decimal
+# Piso da tolerância (kWh): a SEMS mostra o green com uma casa decimal.
+# Sem ele, sessões pequenas eram barradas à toa (ex.: green 0,7 de 0,75 kWh,
+# diferença acima dos 5% do total).
 TOLERANCIA_ATRIBUICAO_MIN_KWH = 0.1
 
 
@@ -36,6 +48,7 @@ def verificar_kwh_negativo(sessao: SessionDTO):
 def verificar_duracao_curta(sessao: SessionDTO):
     """Detecta sessão com menos de 1 minuto que mesmo assim registrou energia."""
     duracao = (sessao.ended_at - sessao.started_at).total_seconds()
+    # Sessão curta sem energia (plugou e desplugou) é comportamento normal, não erro de medição
     if duracao < DURACAO_MINIMA_SEGUNDOS and sessao.total_kwh > 0:
         return "DURATION_TOO_SHORT"
     return None
@@ -79,7 +92,11 @@ def verificar_capacidade(sessao: SessionDTO):
 
 
 def verificar_atribuicao_energia(sessao: SessionDTO):
-    """Detecta quando solar (green) + rede (grid) não explica o total consumido."""
+    """Detecta quando solar (green) + rede (grid) não explica o total consumido.
+
+    Dispara no lab quando a SEMS zera as duas origens. A regra fica ativa de
+    propósito: sem origem confiável, o rateio solar/rede da sessão sairia errado.
+    """
     soma_origens = sessao.green_kwh + sessao.grid_kwh
     diferenca = abs(soma_origens - sessao.total_kwh)
 
@@ -90,6 +107,7 @@ def verificar_atribuicao_energia(sessao: SessionDTO):
 
 
 # Ordem em que as regras são aplicadas. Para criar uma regra nova, basta escrever a função acima e acrescentá-la nesta lista.
+# A lista guarda as próprias funções (sem parênteses), que verificar_regras chama uma a uma.
 REGRAS = [
     verificar_timestamp,
     verificar_kwh_negativo,
@@ -102,7 +120,10 @@ REGRAS = [
 
 
 def verificar_regras(sessao: SessionDTO):
-    """Aplica todas as regras e devolve a lista de códigos violados (vazia se a sessão é plausível)."""
+    """Aplica todas as regras e devolve a lista de códigos violados (vazia se a sessão é plausível).
+
+    Não para na primeira violação: o síndico vê todos os problemas de uma vez.
+    """
     violacoes = []
     for regra in REGRAS:
         codigo = regra(sessao)

@@ -1,4 +1,9 @@
-"""Testes da fachada check_session (integração das três camadas)."""
+"""Testes da fachada check_session (integração das três camadas).
+
+Um teste por porta de saída (passed, ml, rules, structural). Os casos de pico
+de 6 kW e 15 kW mostram a divisão de trabalho: 6 kW é possível num carregador
+de 7 kW (só o ML estranha); 15 kW é fisicamente impossível (as regras barram).
+"""
 
 from condocharge_ai.anomaly import check_session
 

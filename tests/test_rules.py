@@ -157,6 +157,8 @@ def test_sessao_com_varios_problemas_retorna_todas_as_violacoes():
     sessao = SessionDTO.model_validate(dados)
 
     resultado = rules.verificar_regras(sessao)
+    # "in" em vez de igualdade: grid negativo também quebra a atribuição de
+    # energia, então a lista tem mais códigos além destes dois
     assert "NEGATIVE_KWH" in resultado
     assert "POWER_EXCEEDS_NOMINAL" in resultado
 

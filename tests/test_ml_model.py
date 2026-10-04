@@ -1,4 +1,8 @@
-"""Testes da Camada 3 (modelo de detecção de anomalias)."""
+"""Testes da Camada 3 (modelo de detecção de anomalias).
+
+Usam o modelo salvo em artifacts/modelo_v1.joblib: se o modelo for retreinado,
+estes testes também verificam se o comportamento esperado se manteve.
+"""
 
 import pytest
 
@@ -19,11 +23,15 @@ def test_features_extraidas_na_ordem_esperada():
     assert features[1] == 14.8
     assert features[2] == 6.8
     assert features[3] == 7.1
+    # 14,8 / (6,8 x 2,1667): acima do ~0,90 real porque a sessão padrão é hipotética
     assert features[4] == pytest.approx(1.0045, abs=0.001)
 
 
 def sessao_tipica_do_lab():
     """Sessão com valores próximos da mediana das sessões reais do HCA G2."""
+    # A sessão padrão de test_schemas (6,8 kW de média) serve às regras, mas está
+    # longe do perfil do lab; para o ML a base precisa ser típica: 8 kWh, 2,3 kW de
+    # média, pico de 3,4 kW e fator de coerência ~0,91. Também é usada em test_anomaly.
     dados = dados_sessao_valida()
     dados["started_at"] = "2026-09-22T21:00:00"
     dados["ended_at"] = "2026-09-23T00:50:00"

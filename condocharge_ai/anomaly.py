@@ -1,9 +1,14 @@
+"""Fachada do módulo de IA: aplica as três camadas de verificação a uma sessão de recarga.
+
+A ordem vai do mais barato e mais certo (formato, física) para o mais caro e
+mais incerto (ML), parando na primeira camada que barrar. Assim o síndico
+recebe o motivo mais preciso e o modelo não é consultado à toa.
+"""
+
 from pydantic import ValidationError
 
 from condocharge_ai.schemas import SessionDTO
 from condocharge_ai import ml_model, rules
-
-"""Fachada do módulo de IA: aplica as três camadas de verificação a uma sessão de recarga."""
 
 # Frases exibidas ao síndico na fila de revisão, uma para cada código de problema
 DESCRICOES_MOTIVOS = {
@@ -22,7 +27,13 @@ DESCRICOES_MOTIVOS = {
 
 
 def montar_resultado(layer, reasons, score, model_version):
-    """Monta o resultado da verificação no formato combinado com o backend."""
+    """Monta o resultado da verificação no formato combinado com o backend.
+
+    O formato é o mesmo em todas as saídas, para o backend nunca precisar
+    tratar casos diferentes. is_anomaly sai de layer: só "passed" vai para o rateio.
+    """
+    # .get(codigo, codigo): se um código novo ainda não tiver frase, o síndico
+    # vê o próprio código em vez de o sistema quebrar
     return {
         "is_anomaly": layer != "passed",
         "score": score,
@@ -34,12 +45,20 @@ def montar_resultado(layer, reasons, score, model_version):
 
 
 def check_session(dados):
-    """Verifica uma sessão nas três camadas e devolve o veredito no formato do contrato."""
+    """Verifica uma sessão nas três camadas e devolve o veredito no formato do contrato.
+
+    É a única função que o backend chama. Sessão com is_anomaly=True não é
+    cobrada: vai para a revisão do síndico (direito de revisão, LGPD art. 20).
+    """
 
     # Camada 1: validação estrutural
+    # Score 1.0 nas Camadas 1 e 2: formato errado e física impossível são certeza,
+    # não suspeita. model_version None indica que o ML não chegou a rodar.
     try:
         sessao = SessionDTO.model_validate(dados)
     except ValidationError as erro:
+        # O Pydantic gera um erro por campo; aqui eles viram só dois códigos,
+        # sem repetição e na ordem em que apareceram
         codigos = []
         for problema in erro.errors():
             if problema["type"] == "missing":
@@ -56,6 +75,7 @@ def check_session(dados):
         return montar_resultado("rules", violacoes, 1.0, None)
     
     # Camada 3: modelo de ML
+    # Mesmo aprovada, a sessão leva o score e a versão do modelo, para auditoria
     resultado_ml = ml_model.avaliar_sessao(sessao)
     if resultado_ml["is_anomaly"]:
         camada = "ml"

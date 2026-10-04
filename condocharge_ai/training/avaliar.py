@@ -1,4 +1,9 @@
-"""Avaliação do sistema completo (três camadas) com sessões reais e anomalias de medição."""
+"""Avaliação do sistema completo (três camadas) com sessões reais e anomalias de medição.
+
+Avalia pela check_session, e não só pelo modelo, para medir o que o síndico
+de fato veria. Usa apenas a validação (sessões mais recentes), que o modelo
+nunca viu no treino.
+"""
 
 from collections import Counter
 
@@ -10,6 +15,8 @@ from condocharge_ai.training.dataset import TIPOS_ANOMALIA, criar_anomalias
 def contar_portas(sessoes):
     """Passa cada sessão pela check_session e conta por qual porta (layer) ela saiu."""
     resultados = [check_session(dados) for dados in sessoes]
+    # Counter conta quantas vezes cada layer aparece e devolve 0 para layer
+    # ausente, então contagem["ml"] funciona mesmo sem nenhuma sessão barrada no ML
     return Counter(resultado["layer"] for resultado in resultados)
 
 
@@ -28,6 +35,8 @@ def main():
     """Avalia o sistema com as sessões reais de validação, as anomalias e as sessões sem energia."""
     normais, sem_energia = carregar_sessoes_reais()
     _, validacao = separar_treino_validacao(normais)
+    # Anomalias derivadas de sessões reais de validação, e não do gerador
+    # sintético: só a grandeza alterada difere do padrão real
     anomalias = criar_anomalias(validacao)
 
     print("=== Avaliação do sistema CondoCharge (três camadas) ===")
@@ -37,6 +46,7 @@ def main():
 
     print("\nDetecção por tipo de anomalia:")
     for tipo in TIPOS_ANOMALIA:
+        # O tipo vem codificado no session_id criado por criar_anomalia
         do_tipo = [a for a in anomalias if a["session_id"].startswith(f"ANOM-{tipo}-")]
         contagem = contar_portas(do_tipo)
         print(f"  {tipo:<20} {len(do_tipo) - contagem['passed']} de {len(do_tipo)}")

@@ -8,6 +8,8 @@ from condocharge_ai.schemas import SessionDTO
 
 def dados_sessao_valida():
     """Dados de uma sessão de recarga válida, usados como base nos testes."""
+    # Função, e não constante: cada teste recebe um dicionário novo e pode
+    # alterá-lo sem afetar os outros
     return {
         "session_id": "abc123",
         "charger_id": "HCA01",
