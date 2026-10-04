@@ -23,10 +23,10 @@ Avaliação com as sessões reais mais recentes (que o modelo nunca viu) e com a
 | Grupo | Resultado |
 |---|---|
 | Anomalias de medição | **38 de 40 detectadas (95%)**, todas pela camada de ML |
-| Sessões reais normais | **~5% de falso alarme** (2 de 42) |
-| Sessões reais sem energia (carro plugado sem carregar) | **10 de 10 identificadas** |
+| Sessões reais normais | **2 falsos alarmes em 42 sessões (~5%)** |
+| Sessões reais sem energia (carro plugado sem carregar) | **10 de 10 barradas** (3 pelas regras, 7 pelo ML) |
 
-A avaliação também encontrou uma sessão real em que a SEMS+ não atribuiu a energia nem ao solar nem à rede, barrada corretamente pela regra de atribuição. Detalhes e justificativas em [`DECISOES.md`](DECISOES.md).
+A avaliação também encontrou uma sessão real em que a SEMS+ não atribuiu a energia nem ao solar nem à rede, barrada corretamente pela regra de atribuição. Essa sessão é a 43ª do conjunto de validação: por isso o script de avaliação mostra "3 de 43" barradas, somando o bloqueio legítimo pela regra aos 2 falsos alarmes. Detalhes e justificativas em [`DECISOES.md`](DECISOES.md).
 
 ## Como o backend usa
 
@@ -59,7 +59,7 @@ resultado = check_session(dados_da_sessao)
 ```python
 {
     "is_anomaly": False,          # True = suspender a cobrança e enviar para revisão
-    "score": 0.199,               # 0 a 1; nas camadas 1 e 2 é sempre 1.0
+    "score": 0.199,               # intensidade relativa; nas camadas 1 e 2 é sempre 1.0
     "layer": "passed",            # "structural" | "rules" | "ml" | "passed"
     "reasons": [],                # códigos técnicos dos problemas
     "reasons_human": [],          # frases em português para o síndico
@@ -67,7 +67,7 @@ resultado = check_session(dados_da_sessao)
 }
 ```
 
-O campo `layer` indica em que camada a sessão foi barrada. Só sessões com `layer: "passed"` seguem para o rateio.
+O campo `layer` indica em que camada a sessão foi barrada. Só sessões com `layer: "passed"` seguem para o rateio. **Atenção:** a decisão é o `is_anomaly`. O `score` indica a intensidade da suspeita, mas não é uma probabilidade calibrada e **não deve ser usado como limiar** (por exemplo, `score > 0.5`).
 
 ## Estrutura do projeto
 

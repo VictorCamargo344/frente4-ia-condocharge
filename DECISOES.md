@@ -25,7 +25,7 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 
 - **Sete regras determinísticas:** `INVALID_TIMESTAMP`, `NEGATIVE_KWH`, `DURATION_TOO_SHORT`, `UNKNOWN_CHARGER`, `POWER_EXCEEDS_NOMINAL`, `KWH_EXCEEDS_CAPACITY` e `ENERGY_SOURCE_ATTRIBUTION_MISMATCH`.
 - **Cadastro de carregadores por potência nominal.** As regras de potência e capacidade consultam um dicionário por carregador, o que deixa a solução pronta para condomínios com vários carregadores.
-- **Tolerância de 5% nas regras de potência e capacidade.** A sessão de referência tinha pico de 7,1 kW num carregador de 7,0 kW; medidores reais oscilam um pouco acima do nominal.
+- **Tolerância de 5% nas regras de potência e capacidade.** Medidores reais oscilam um pouco acima do valor nominal, e as regras devem barrar só o que é claramente impossível. É uma margem de segurança, não um valor calibrado com dado real: no laboratório, a potência nunca passou de 3,5 kW, bem abaixo do limite de 7,35 kW.
 - **Piso de 0,1 kWh na regra de atribuição.** Com dado real, duas sessões pequenas foram marcadas à toa porque a SEMS mostra o green com uma casa decimal (ex.: 0,7 de 0,75 kWh). A tolerância passou a ser o maior entre 5% do total e 0,1 kWh.
 - **A regra de atribuição continua ativa mesmo disparando no laboratório.** No lab, a SEMS registra quase toda a energia como solar e às vezes zera as duas origens. A regra sinaliza esse problema de instrumentação antes do rateio, em vez de escondê-lo.
 - **"Desconexão anormal" não é motivo de bloqueio.** Aparece em ~12% das sessões reais, inclusive em sessões que carregaram normalmente.
@@ -33,8 +33,8 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 ## 5. Camada 3 — modelo de ML
 
 - **Isolation Forest + LOF (PyOD), combinados por "ou".** A sessão é suspeita se qualquer um dos dois marcar. Na avaliação, as anomalias de pico e de potência alta foram pegas só pelo LOF: os modelos se complementam.
-- **Score final é o maior dos dois.** A opinião mais desconfiada.
-- **`contamination = 0.02`.** Linha de corte calibrada para aceitar cerca de 2% de falso alarme no treino.
+- **Score final é o maior dos dois, mas é relativo.** O score do PyOD não é uma probabilidade calibrada: ele não ordena perfeitamente as sessões (na avaliação, duas anomalias não detectadas tiveram score maior que uma detectada). A decisão é sempre o `is_anomaly`, calculado pelas linhas de corte dos modelos; o score serve como indicação de intensidade e não deve ser usado como limiar.
+- **`contamination = 0.02`, por modelo.** Cada modelo coloca a linha de corte de forma que cerca de 2% das sessões de treino fiquem acima dela (4 de 172). Como a sessão é suspeita se qualquer um dos dois marcar, o sistema combinado marca cerca de 3,5% do treino (6 de 172). Na validação, com sessões futuras, a taxa observada foi de ~5%.
 - **Padronização da escala (`StandardScaler`).** O LOF mede distâncias; sem padronizar, features com números maiores pesariam mais.
 - **Cinco features:** duração (h), energia total (kWh), potência média (kW), potência máxima (kW) e fator de coerência.
 - **Fator de coerência = energia ÷ (potência média × duração).** Nas sessões reais vale 0,90 ± 0,008. Sem ele, o modelo pegava só 1 de 8 sessões com medição incoerente (números plausíveis isoladamente, mas que não fecham entre si); com ele, 8 de 8.
@@ -53,8 +53,8 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 - **Anomalias de avaliação criadas a partir de sessões reais de validação**, em cinco tipos: pico alto, potência alta, energia alta, recarga lenta e medição incoerente. Todas são fisicamente possíveis (passam nas regras), para que apenas a Camada 3 possa detectá-las.
 - **Resultados (`python -m condocharge_ai.training.avaliar`):**
   - Anomalias detectadas: **38 de 40 (95%)**, todas pela Camada 3.
-  - Sessões reais de validação: 40 aprovadas, **2 barradas pelo ML (falso alarme de ~5%)** e 1 barrada pela regra de atribuição (sessão de 20/08/2026 com solar e rede zerados, problema real da SEMS).
-  - Sessões reais sem energia: **10 de 10 barradas**. O sistema identifica sozinho as sessões em que o carro ficou plugado sem carregar.
+  - Sessões reais de validação (43): 40 aprovadas, 1 barrada pela regra de atribuição e 2 barradas pelo ML. A barrada pela regra (20/08/2026, com solar e rede zerados) tem um problema real de atribuição na SEMS+ e não conta como falso alarme. Os falsos alarmes são as 2 do ML: **2 em 42 sessões normais (~5%)**. O script de avaliação imprime "3 de 43" porque soma as duas situações.
+  - Sessões reais sem energia: **10 de 10 barradas** (3 pelas regras e 7 pelo ML). Nenhuma delas chega à fatura, mas as 7 barradas pelo ML aparecem ao síndico com o motivo genérico de padrão fora do histórico.
 
 ## 8. Desvios em relação à Sprint 1 e limitações
 
