@@ -24,6 +24,7 @@ DESCRICOES_MOTIVOS = {
     "ISOLATION_FOREST_OUTLIER": "Padrão de medição muito diferente do histórico do condomínio.",
     "LOF_OUTLIER": "Padrão de medição isolado em relação às sessões mais parecidas.",
     "NO_ENERGY_DELIVERED": "Carro plugado sem receber energia: vaga ocupada sem recarga.",
+    "AVERAGE_EXCEEDS_MAX_POWER": "Potência média registrada maior que a potência máxima; verificar a medição.",
 }
 
 

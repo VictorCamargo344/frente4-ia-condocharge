@@ -220,3 +220,35 @@ def test_sessao_logo_acima_do_limite_passa():
 
     resultado = rules.verificar_sem_energia(sessao)
     assert resultado is None
+
+
+def test_potencia_media_abaixo_da_maxima_passa():
+    """Uma sessão com potência média abaixo da máxima não deve violar a regra AVERAGE_EXCEEDS_MAX_POWER."""
+    dados = dados_sessao_valida()  # média 6,8 kW, máxima 7,1 kW
+    sessao = SessionDTO.model_validate(dados)
+    resultado = rules.verificar_potencia_media_acima_da_maxima(sessao)
+    assert resultado is None
+
+
+def test_potencia_media_acima_da_maxima_e_detectada():
+    """Uma sessão com potência média maior que a máxima deve violar a regra AVERAGE_EXCEEDS_MAX_POWER."""
+    dados = dados_sessao_valida()
+    dados["average_power_kw"] = 7.1
+    dados["max_power_kw"] = 6.8
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_potencia_media_acima_da_maxima(sessao)
+    assert resultado == "AVERAGE_EXCEEDS_MAX_POWER"
+
+
+def test_potencia_media_igual_a_maxima_passa():
+    """Uma sessão com potência média igual à máxima não deve violar a regra AVERAGE_EXCEEDS_MAX_POWER (a comparação usa >)."""
+    dados = dados_sessao_valida()
+    dados["average_power_kw"] = 7.1
+    dados["max_power_kw"] = 7.1
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_potencia_media_acima_da_maxima(sessao)
+    assert resultado is None

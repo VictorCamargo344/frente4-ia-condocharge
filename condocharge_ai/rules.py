@@ -129,6 +129,13 @@ def verificar_sem_energia(sessao: SessionDTO):
     return None
 
 
+def verificar_potencia_media_acima_da_maxima(sessao: SessionDTO):
+    """Detecta sessão com potência média maior que a máxima, o que é fisicamente impossível."""
+    # Usa > e não >=: média igual à máxima é possível (sessão sem energia ou carga plana)
+    if sessao.average_power_kw > sessao.max_power_kw:
+        return "AVERAGE_EXCEEDS_MAX_POWER"
+    return None
+
 # Ordem em que as regras são aplicadas. Para criar uma regra nova, basta escrever a função acima e acrescentá-la nesta lista.
 # A lista guarda as próprias funções (sem parênteses), que verificar_regras chama uma a uma.
 REGRAS = [
@@ -140,6 +147,7 @@ REGRAS = [
     verificar_capacidade,
     verificar_atribuicao_energia,
     verificar_sem_energia,
+    verificar_potencia_media_acima_da_maxima,
 ]
 
 

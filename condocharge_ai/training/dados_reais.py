@@ -7,7 +7,9 @@ regime de uso.
 
 import glob
 from pathlib import Path
+
 import pandas as pd
+
 from condocharge_ai.rules import ENERGIA_MINIMA_RECARGA_KWH
 
 # Pasta com os CSVs exportados da SEMS+, na raiz do projeto (calculada a partir deste arquivo)
