@@ -23,13 +23,14 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 
 ## 4. Camada 2 — regras físicas
 
-- **Oito regras determinísticas:** `INVALID_TIMESTAMP`, `NEGATIVE_KWH`, `DURATION_TOO_SHORT`, `UNKNOWN_CHARGER`, `POWER_EXCEEDS_NOMINAL`, `KWH_EXCEEDS_CAPACITY`, `ENERGY_SOURCE_ATTRIBUTION_MISMATCH` e `NO_ENERGY_DELIVERED`.
+- **Nove regras determinísticas:** `INVALID_TIMESTAMP`, `NEGATIVE_KWH`, `DURATION_TOO_SHORT`, `UNKNOWN_CHARGER`, `POWER_EXCEEDS_NOMINAL`, `KWH_EXCEEDS_CAPACITY` `ENERGY_SOURCE_ATTRIBUTION_MISMATCH`, `NO_ENERGY_DELIVERED` e `AVERAGE_EXCEEDS_MAX_POWER`.
 - **Cadastro de carregadores por potência nominal.** As regras de potência e capacidade consultam um dicionário por carregador, o que deixa a solução pronta para condomínios com vários carregadores.
 - **Tolerância de 5% nas regras de potência e capacidade.** Medidores reais oscilam um pouco acima do valor nominal, e as regras devem barrar só o que é claramente impossível. É uma margem de segurança, não um valor calibrado com dado real: no laboratório, a potência nunca passou de 3,5 kW, bem abaixo do limite de 7,35 kW.
 - **Piso de 0,1 kWh na regra de atribuição.** Com dado real, duas sessões pequenas foram marcadas à toa porque a SEMS mostra o green com uma casa decimal (ex.: 0,7 de 0,75 kWh). A tolerância passou a ser o maior entre 5% do total e 0,1 kWh.
 - **A regra de atribuição continua ativa mesmo disparando no laboratório.** No lab, a SEMS registra quase toda a energia como solar e às vezes zera as duas origens. A regra sinaliza esse problema de instrumentação antes do rateio, em vez de escondê-lo.
 - **"Desconexão anormal" não é motivo de bloqueio.** Aparece em ~12% das sessões reais, inclusive em sessões que carregaram normalmente.
 - **Regra própria para sessão sem recarga (`NO_ENERGY_DELIVERED`).** Antes dela, 7 das 10 sessões reais sem energia eram barradas pelo ML, e o síndico via só "padrão fora do histórico". Com a regra, as 10 chegam com o motivo certo: carro plugado sem receber energia, informação útil para a tarifa de ociosidade do rateio. O limite de 0,25 kWh fica entre a maior sessão real sem recarga (0,24 kWh) e a menor sessão normal real (0,75 kWh), e abaixo da menor anomalia dos testes automatizados (0,3 kWh, sessão sintética de 1 kWh com 30% da energia), que precisa continuar sendo detectada só pelo ML. Na avaliação com dado real, a menor anomalia tem 1,47 kWh.
+- **Regra para potência média acima da máxima (`AVERAGE_EXCEEDS_MAX_POWER`).** Caso fisicamente impossível que antes dependia do ML. Usa "maior que" e não "maior ou igual": média igual à máxima é possível (sessão sem energia ou carga plana). Nenhuma das 225 sessões reais viola a regra.
 
 ## 5. Camada 3 — modelo de ML
 
@@ -70,3 +71,5 @@ Registro das decisões tomadas durante o desenvolvimento do módulo de detecçã
 - **Junção das tabelas pelo horário de início.** Os CSVs da SEMS+ não têm identificador de sessão; a lista e os detalhes são unidos pelo horário de início. Hoje as 225 sessões casam uma a uma, sem duplicatas.
 - **Gerador sintético simplificado.** Limita a potência média a 3,3 kW (o real chegou a 3,38) e sorteia a divisão solar/rede, enquanto o lab registra quase tudo como solar. Não afeta o modelo, que é treinado com dado real.
 - **Motivos sobrepostos.** Uma mesma sessão pode disparar mais de uma regra (ex.: término antes do início também conta como duração curta). O síndico vê todos os motivos, o que é redundante mas não incorreto.
+- **Anomalia de energia alta depende da sessão base.** A fórmula (2,5 × energia da base + 5 kWh) só passa da maior sessão real (16 kWh) quando a base tem mais de ~4,5 kWh. As duas anomalias desse tipo não detectadas são justamente as de menor energia (~17 kWh). A fórmula não foi alterada para não ajustar a avaliação ao resultado do modelo.
+- **Erros da Camada 1 não indicam o campo.** O código `INVALID_FIELD` não diz qual campo veio errado, embora o Pydantic forneça essa informação. Melhoria futura: incluir o nome do campo na frase para o síndico.

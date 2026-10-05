@@ -11,7 +11,7 @@ Toda sessão passa por três camadas, em sequência, e para na primeira que barr
 | Camada | Pergunta | Ferramenta | Exemplo barrado |
 |---|---|---|---|
 | 1. Estrutural | Os dados estão no formato certo? | Pydantic | sessão sem o campo de energia |
-| 2. Regras | A sessão é fisicamente possível? | 7 regras determinísticas | pico de 15 kW num carregador de 7 kW |
+| 2. Regras | A sessão é fisicamente possível e houve recarga? | 9 regras determinísticas | pico de 15 kW num carregador de 7 kW |
 | 3. ML | A sessão se parece com o histórico? | Isolation Forest + LOF (PyOD) | pico de 6 kW num carregador que sempre opera até 3,5 kW |
 
 O modelo de ML foi treinado com **sessões reais do carregador GoodWe HCA G2** do laboratório da FIAP, extraídas da plataforma SEMS+.
