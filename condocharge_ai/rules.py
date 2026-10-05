@@ -35,7 +35,7 @@ TOLERANCIA_ATRIBUICAO_MIN_KWH = 0.1
 
 # Energia máxima (kWh) de uma sessão sem recarga: as sessões reais sem energia tiveram até 0,24 kWh, e a menor sessão normal real teve 0,75 kWh
 # Precisa ficar abaixo das anomalias de avaliação, que só o ML deve detectar.
-# Ver também ENERGIA_MINIMA_KWH em training/dados_reais.py, que separa as
+# Esta mesma constante é usada em training/dados_reais.py para separar as sessões sem recarga
 # mesmas sessões com outro valor.
 ENERGIA_MINIMA_RECARGA_KWH = 0.25
 

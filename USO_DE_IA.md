@@ -7,7 +7,7 @@ O briefing da Sprint 2 permite o uso de ferramentas de IA no desenvolvimento, de
 | Ferramenta | Como foi usada |
 |---|---|
 | **Claude (chat)** | Tutor durante todo o desenvolvimento: explicação de conceitos de Python e de ML, orientação passo a passo, depuração de erros e revisão de cada trecho escrito. A maior parte do código foi escrita pelo integrante com essa orientação; alguns trechos foram sugeridos prontos pela IA e depois revisados e testados (as regras de potência, capacidade e atribuição, a função que agrega as regras, o script de treino, a leitura dos CSVs e a criação das anomalias de avaliação). Também gerou os rascunhos do README e do DECISOES.md, revisados e ajustados pelo integrante. |
-| **Claude Code** | Duas revisões do código pronto: acréscimo de comentários e docstrings (sem alterar lógica) e um relatório de bugs, inconsistências e pontos frágeis. As correções foram decididas e aplicadas pelo integrante, uma a uma. |
+| **Claude Code** | Três revisões do código pronto: acréscimo de comentários e docstrings (sem alterar lógica) e um relatório de bugs, inconsistências e pontos frágeis. As correções foram decididas e aplicadas pelo integrante, uma a uma. |
 | **Extensão de IA para navegador** | Extração das 225 sessões de recarga da plataforma SEMS+, em modo somente leitura, a partir de instruções detalhadas. Os dados foram validados depois da extração, o que revelou um erro de leitura no campo green em 35 sessões, corrigido e documentado. |
 
 ## Como o uso foi conduzido

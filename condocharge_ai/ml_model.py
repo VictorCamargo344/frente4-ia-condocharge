@@ -83,8 +83,8 @@ def avaliar_sessao(sessao: SessionDTO):
     padronizadas = modelo["escalonador"].transform(features)
 
     # No PyOD, predict devolve 1 para outlier e 0 para normal; [0] pega a única linha.
-    # Os dois se complementam ("ou"): na avaliação, pico alto e potência alta
-    # foram pegos só pelo LOF.
+    # Combinação por "ou". Na avaliação atual, o LOF sozinho detectou as 38 anomalias;
+    # o Isolation Forest fica como segunda opinião para anomalias extremas (ver DECISOES.md §5)
     suspeita_iforest = bool(modelo["iforest"].predict(padronizadas)[0])
     suspeita_lof = bool(modelo["lof"].predict(padronizadas)[0])
 

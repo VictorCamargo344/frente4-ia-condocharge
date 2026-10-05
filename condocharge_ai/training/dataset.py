@@ -43,7 +43,7 @@ HORA_DIA_DESVIO = 3.0
 def gerar_sessao_normal(rng, indice):
     """Gera uma sessão de recarga normal, no formato do SessionDTO."""
     # A normal pode sortear valores fora do que é físico ou do que o lab mostra;
-    # os max/min cortam as pontas: energia >= 1 kWh (abaixo de 0,5 nem é recarga),
+    # os max/min cortam as pontas: energia >= 1 kWh (até 0,25 kWh nem é recarga (limite da regra NO_ENERGY_DELIVERED)),
     # hora dentro do dia e potência média entre 1,0 e 3,3 kW (faixa real).
     energia_kwh = max(rng.normal(ENERGIA_MEDIA_KWH, ENERGIA_DESVIO_KWH), 1.0)
     if rng.uniform(0.0, 1.0) < PROPORCAO_SESSOES_NOITE:
