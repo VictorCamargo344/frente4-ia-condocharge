@@ -8,6 +8,7 @@ regime de uso.
 import glob
 from pathlib import Path
 import pandas as pd
+from condocharge_ai.rules import ENERGIA_MINIMA_RECARGA_KWH
 
 # Pasta com os CSVs exportados da SEMS+, na raiz do projeto (calculada a partir deste arquivo)
 # Três .parent sobem de training/dados_reais.py até a raiz; assim treino e
@@ -22,13 +23,6 @@ MOTIVO_PARA_STATUS = {
     "Abnormal disconnection of charging gun from vehicle.": "abnormal_disconnection",
     "Generation Loss": "interrupted_by_failure",
 }
-
-
-# Sessões com energia até este valor não são recargas de fato (carro plugado sem carregar)
-# Não é o mesmo limite da regra NO_ENERGY_DELIVERED (0,25 kWh em rules.py): nos
-# dados atuais os dois separam as mesmas sessões, porque não há nenhuma entre
-# 0,24 e 0,75 kWh. Se um dia houver, ela sai do treino mas passa pela regra.
-ENERGIA_MINIMA_KWH = 0.5
 
 
 def carregar_tabela_real(pasta=PASTA_DADOS):
@@ -83,7 +77,7 @@ def carregar_sessoes_reais(pasta=PASTA_DADOS):
     # sessões a clareza compensa.
     for indice, linha in tabela.iterrows():
         dados = linha_para_sessao(linha, indice)
-        if linha["energia_total_kwh"] > ENERGIA_MINIMA_KWH:
+        if linha["energia_total_kwh"] > ENERGIA_MINIMA_RECARGA_KWH:
             sessoes.append(dados)
         else:
             sessoes_sem_energia.append(dados)
