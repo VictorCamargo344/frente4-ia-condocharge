@@ -120,4 +120,4 @@ Os testes não dependem dos CSVs: usam dados sintéticos calibrados com as sess�
 - A recomendação de horário de recarga (IA B, prevista na Sprint 1) fica como evolução futura.
 - Sem acesso físico ao equipamento, o gateway local com Modbus TCP não foi implementado; os dados vêm da SEMS+.
 
-Mais detalhes em [`DECISOES.md`](DECISOES.md).
+   Mais detalhes em [`DECISOES.md`](DECISOES.md). O uso de ferramentas de IA no desenvolvimento está descrito em [`USO_DE_IA.md`](USO_DE_IA.md).
