@@ -23,6 +23,8 @@ def contar_portas(sessoes):
 def imprimir_grupo(nome, contagem):
     """Mostra quantas sessões do grupo saíram por cada porta e a fração barrada."""
     total = sum(contagem.values())
+    # Um grupo pode vir vazio (ex.: um export sem sessões sem energia); sem isto,
+    # a fração barrada dividiria por zero
     if total == 0:
         print(f"\n{nome}: nenhuma sessão")
         return

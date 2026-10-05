@@ -9,9 +9,9 @@ import glob
 from pathlib import Path
 import pandas as pd
 
-# Pasta com os CSVs exportados da SEMS+, relativa à raiz do projeto
-# (por isso os scripts de treino rodam da raiz, com python -m)
 # Pasta com os CSVs exportados da SEMS+, na raiz do projeto (calculada a partir deste arquivo)
+# Três .parent sobem de training/dados_reais.py até a raiz; assim treino e
+# avaliação funcionam de qualquer diretório, como já acontece com CAMINHO_MODELO.
 PASTA_DADOS = Path(__file__).parent.parent.parent / "data"
 
 
@@ -25,6 +25,9 @@ MOTIVO_PARA_STATUS = {
 
 
 # Sessões com energia até este valor não são recargas de fato (carro plugado sem carregar)
+# Não é o mesmo limite da regra NO_ENERGY_DELIVERED (0,25 kWh em rules.py): nos
+# dados atuais os dois separam as mesmas sessões, porque não há nenhuma entre
+# 0,24 e 0,75 kWh. Se um dia houver, ela sai do treino mas passa pela regra.
 ENERGIA_MINIMA_KWH = 0.5
 
 

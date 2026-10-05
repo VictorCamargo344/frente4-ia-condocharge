@@ -1,7 +1,9 @@
 """Regras determinísticas da Camada 2: plausibilidade física das sessões.
 
 Cada regra devolve um código de violação ou None. Violação aqui é certeza
-física (não suspeita estatística), por isso a fachada dá score 1.0 a ela.
+(não suspeita estatística), por isso a fachada dá score 1.0 a ela. Quase todas
+são impossibilidades físicas; a exceção é NO_ENERGY_DELIVERED, um evento real
+(carro plugado sem carregar) que também não deve entrar no rateio de energia.
 """
 
 from condocharge_ai.schemas import SessionDTO
@@ -18,9 +20,10 @@ POTENCIA_NOMINAL_KW = {
 DURACAO_MINIMA_SEGUNDOS = 60
 
 # Margem para variações normais de medição (5%).
-# Potência: a sessão de referência teve pico de 7,1 kW num carregador de 7,0 kW;
-# medidores reais oscilam um pouco acima do nominal. A mesma margem vale para
-# a regra de capacidade, que usa a potência nominal.
+# Margem de segurança, não valor calibrado: medidores oscilam um pouco acima do
+# nominal, e a regra só deve barrar o claramente impossível (no lab o pico
+# nunca passou de 3,5 kW, longe dos 7,35 kW). A mesma margem vale para a regra
+# de capacidade, que usa a potência nominal.
 TOLERANCIA_POTENCIA = 0.05
 TOLERANCIA_ATRIBUICAO = 0.05
 
@@ -31,6 +34,9 @@ TOLERANCIA_ATRIBUICAO = 0.05
 TOLERANCIA_ATRIBUICAO_MIN_KWH = 0.1
 
 # Energia máxima (kWh) de uma sessão sem recarga: as sessões reais sem energia tiveram até 0,24 kWh, e a menor sessão normal real teve 0,75 kWh
+# Precisa ficar abaixo das anomalias de avaliação, que só o ML deve detectar.
+# Ver também ENERGIA_MINIMA_KWH em training/dados_reais.py, que separa as
+# mesmas sessões com outro valor.
 ENERGIA_MINIMA_RECARGA_KWH = 0.25
 
 
@@ -51,7 +57,8 @@ def verificar_kwh_negativo(sessao: SessionDTO):
 def verificar_duracao_curta(sessao: SessionDTO):
     """Detecta sessão com menos de 1 minuto que mesmo assim registrou energia."""
     duracao = (sessao.ended_at - sessao.started_at).total_seconds()
-    # Sessão curta sem energia (plugou e desplugou) é comportamento normal, não erro de medição
+    # Sessão curta sem energia (plugou e desplugou) é comportamento normal, não erro de medição;
+    # quem a sinaliza é NO_ENERGY_DELIVERED
     if duracao < DURACAO_MINIMA_SEGUNDOS and sessao.total_kwh > 0:
         return "DURATION_TOO_SHORT"
     return None
@@ -110,7 +117,13 @@ def verificar_atribuicao_energia(sessao: SessionDTO):
 
 
 def verificar_sem_energia(sessao: SessionDTO):
-    """Detecta sessão em que o carro ficou plugado sem receber energia."""
+    """Detecta sessão em que o carro ficou plugado sem receber energia.
+
+    Antes desta regra, 7 das 10 sessões reais sem energia caíam no ML e o
+    síndico via só "padrão fora do histórico". Aqui elas chegam com o motivo
+    certo, útil para a tarifa de ociosidade do rateio.
+    """
+    # "<=": o limite é o próprio teto das sessões sem recarga
     if sessao.total_kwh <= ENERGIA_MINIMA_RECARGA_KWH:
         return "NO_ENERGY_DELIVERED"
     return None

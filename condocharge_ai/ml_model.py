@@ -64,6 +64,9 @@ def extrair_features(sessao: SessionDTO):
 def carregar_modelo():
     """Carrega o modelo treinado uma única vez e confere se ele usa as features atuais."""
     modelo = joblib.load(CAMINHO_MODELO)
+    # Sem esta conferência, um modelo antigo com as features em outra ordem ou
+    # quantidade avaliaria sessões sem nenhum erro aparente. O lru_cache não guarda
+    # exceções: enquanto o modelo estiver errado, cada chamada tenta carregá-lo de novo.
     if modelo["nomes_features"] != NOMES_FEATURES:
         raise ValueError("O modelo salvo foi treinado com outras features. Rode o training/train.py novamente.")
     return modelo
