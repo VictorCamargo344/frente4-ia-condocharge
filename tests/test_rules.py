@@ -194,3 +194,29 @@ def test_sessao_sem_energia_e_detectada():
     sessao = SessionDTO.model_validate(dados)
     resultado = rules.verificar_sem_energia(sessao)
     assert resultado == "NO_ENERGY_DELIVERED"
+
+
+def test_sessao_no_limite_de_energia_e_detectada():
+    """Uma sessão com exatamente 0,25 kWh deve violar a regra NO_ENERGY_DELIVERED (a comparação usa <=)."""
+    dados = dados_sessao_valida()
+    dados["total_kwh"] = 0.25
+    dados["green_kwh"] = 0.25
+    dados["grid_kwh"] = 0.0
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_sem_energia(sessao)
+    assert resultado == "NO_ENERGY_DELIVERED"
+
+
+def test_sessao_logo_acima_do_limite_passa():
+    """Uma sessão com 0,26 kWh, logo acima do limite, não deve violar a regra NO_ENERGY_DELIVERED."""
+    dados = dados_sessao_valida()
+    dados["total_kwh"] = 0.26
+    dados["green_kwh"] = 0.26
+    dados["grid_kwh"] = 0.0
+
+    sessao = SessionDTO.model_validate(dados)
+
+    resultado = rules.verificar_sem_energia(sessao)
+    assert resultado is None
