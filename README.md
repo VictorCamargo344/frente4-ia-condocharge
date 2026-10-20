@@ -1,5 +1,11 @@
 # CondoCharge — Frente 4: IA e Ciência de Dados
 
+> **In English:** anomaly detection module for EV charging sessions in shared residential buildings (FIAP × GoodWe Enterprise Challenge 2026). Each session goes through three layers (schema validation, physical rules, and an Isolation Forest + LOF model trained on real sessions from a GoodWe HCA G2 charger) before it reaches the billing step. On held-out real sessions, it caught 38 of 40 injected measurement anomalies with 2 false alarms in 42 normal sessions.
+
+## Contexto e autoria
+
+Este repositório é o módulo de IA do EV ChargeOps / CondoCharge (Enterprise Challenge 2026, FIAP × GoodWe), um projeto em grupo de 5 pessoas. A abordagem (regras + detecção de anomalias) foi definida pela equipe na Sprint 1. O código e a avaliação deste repositório foram desenvolvidos por mim, Victor de Camargo Gomes, com o apoio de ferramentas de IA descrito em [`USO_DE_IA.md`](USO_DE_IA.md). O módulo está integrado ao protótipo completo da equipe ([GoodWe-EV-ChargeOps](https://github.com/GabrielLowis/GoodWe-EV-ChargeOps)), em que o backend chama `check_session` na ingestão de cada sessão, antes da cobrança.
+
 Módulo de detecção de anomalias em sessões de recarga de veículos elétricos do **CondoCharge**, plataforma de gestão de recarga compartilhada em condomínios desenvolvida no Enterprise Challenge 2026 (FIAP × GoodWe).
 
 Antes de uma sessão entrar no rateio e na fatura do morador, o módulo verifica se os dados dela são confiáveis. Sessões suspeitas não são cobradas automaticamente: vão para a fila de revisão do síndico, com o motivo em português.
@@ -27,6 +33,20 @@ Avaliação com as sessões reais mais recentes (que o modelo nunca viu) e com a
 | Sessões reais sem energia (carro plugado sem carregar) | **10 de 10 identificadas** pela regra de sessão sem recarga |
 
 A avaliação também encontrou uma sessão real em que a SEMS+ não atribuiu a energia nem ao solar nem à rede, barrada corretamente pela regra de atribuição. Essa sessão é a 43ª do conjunto de validação: por isso o script de avaliação mostra "3 de 43" barradas, somando o bloqueio legítimo pela regra aos 2 falsos alarmes. Detalhes e justificativas em [`DECISOES.md`](DECISOES.md).
+
+### Distribuição dos scores
+
+Os dois gráficos mostram as sessões que chegam à Camada 3: as 42 sessões reais de validação que passaram nas regras e as 40 anomalias de medição.
+
+![Score bruto do LOF e limiar de decisão](docs/img/lof_limiar.png)
+
+A decisão do LOF é feita pelo limiar aprendido no treino (linha tracejada). As duas sessões reais à direita do limiar são os 2 falsos alarmes, e as duas anomalias à esquerda são as 2 que não foram detectadas.
+
+![Score da Camada 3 por sessão](docs/img/score_camada3.png)
+
+O `score` devolvido pela `check_session` é o maior `predict_proba` entre o Isolation Forest e o LOF. Há sessões reais com score alto que não foram barradas. Por isso a decisão vem do `is_anomaly`, e não de um corte no score.
+
+Os gráficos são gerados por `python -m condocharge_ai.training.graficos`.
 
 ## Como o backend usa
 
@@ -84,6 +104,8 @@ condocharge_ai/
         dataset.py      # gerador sintético e anomalias de avaliação
         train.py        # treino do modelo
         avaliar.py      # avaliação do sistema completo
+        graficos.py     # gráficos de score do README
+docs/img/               # gráficos usados no README
 data/                   # CSVs exportados da SEMS+
 tests/                  # testes automatizados (pytest)
 DECISOES.md             # decisões técnicas e desvios da Sprint 1
@@ -110,9 +132,12 @@ python -m condocharge_ai.training.train
 
 # 5. (Opcional) Reproduzir a avaliação
 python -m condocharge_ai.training.avaliar
+
+# 6. (Opcional) Gerar os gráficos do README em docs/img/
+python -m condocharge_ai.training.graficos
 ```
 
-Os testes não dependem dos CSVs: usam dados sintéticos calibrados com as sessões reais. O treino e a avaliação precisam dos CSVs na pasta `data/`.
+Os testes não dependem dos CSVs: usam dados sintéticos calibrados com as sessões reais. O treino, a avaliação e os gráficos precisam dos CSVs na pasta `data/`.
 
 ## Limitações e próximos passos
 
